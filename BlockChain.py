@@ -48,7 +48,7 @@ class Blockchain(object):
         return len(self.bloques)+1
    
     def prueba_trabajo(self, bloque):
-        new_hash = bloque.calcular_hash()
+        new_hash = bloque.hash_bloque
         while str(new_hash)[:self.dificultad] != '0'*self.dificultad:
             bloque.prueba += 1
             new_hash =bloque.calcular_hash()
@@ -69,8 +69,13 @@ class Blockchain(object):
                 self.transacciones = []
                 return True
         return False
-    
+
+    def toDict(self):
+        chain = []
+        for bloque in self.bloques:
+            chain.append(bloque.toDict())
+        return {'dificultad': self.dificultad, 'transacciones': self.transacciones, 'chain': chain}
 
 
-if __name__ == '__main__':
-    print()
+
+

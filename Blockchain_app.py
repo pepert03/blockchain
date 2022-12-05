@@ -19,6 +19,7 @@ app =Flask(__name__)
 
 # Instanciacion de la aplicacion
 blockchain =BlockChain.Blockchain()
+nodos_red = set() 
 
 # Para saber mi ip
 mi_ip =socket.gethostbyname(socket.gethostname())
@@ -37,6 +38,7 @@ def nueva_transaccion():
     response ={'mensaje': f'La transaccion se incluira en el bloque con indice {index}'}
     return jsonify(response), 201
 
+
 @app.route('/chain', methods=['GET'])
 def blockchain_completa():
     response ={
@@ -45,6 +47,7 @@ def blockchain_completa():
     }
     response['longitud']= len(response['chain']) # esto no se si está bn, pide la longitud de los bloques con hash, es decir, lo de encima
     return jsonify(response), 200
+
 
 @app.route('/minar', methods=['GET'])
 def minar():
@@ -93,6 +96,55 @@ def copia_de_seguridad(): # copia de seguridad que se ejecuta cada 60s para obte
 def detallesnodo():
     detalles = {'maquina':platform.machine(),'nombre_sistema':platform.system(),'version':platform.vesion()}
     return detalles
+
+
+@app.route('/nodos/registrar', methods=['POST'])
+def registrar_nodos_completo():
+    values =request.get_json()
+    global blockchain
+    global nodos_red
+    nodos_nuevos =values.get('direccion_nodos')
+    if nodos_nuevos is None:
+        return "Error: No se ha proporcionado una lista de nodos", 400
+    all_correct =True
+    for nodo in nodos_nuevos:
+        # almacenar los nodos recibidos en nodos_red y enviará a dichos nodos la blockchain del nodo al que se han unido
+        nodos_red.add(nodo)
+        lista_nodos = (nodos_red-nodo) | {f'http://{mi_ip}:5000'}
+        blockchain_2 = blockchain.toDict()
+
+
+    if all_correct:
+        response ={
+        'mensaje': 'Se han incluido nuevos nodos en la red',
+        'nodos_totales': list(nodos_red)
+        }
+    else:
+        response ={
+            'mensaje': 'Error notificando el nodo estipulado',
+            }
+    return jsonify(response), 201
+
+
+
+@app.route('/nodos/registro_simple', methods=['POST'])
+def registrar_nodo_actualiza_blockchain():
+    global blockchain
+    read_json =request.get_json()
+    nodes_addreses =read_json.get("nodos_direcciones")
+    blockchain_leida = BlockChain.Blockchain()
+    for block in read_json['chain']:
+        blockchain_leida.bloques.append(block)
+
+    if not blockchain_leida:
+        return "El blockchain de la red esta currupto", 400
+    else:
+        blockchain = blockchain_leida
+        return "La blockchain del nodo" +str(mi_ip) +":" +str(puerto) +"ha sido correctamente actualizada", 200
+
+
+
+
 
 if __name__ =='__main__':
     parser =ArgumentParser()
