@@ -1,14 +1,13 @@
 import BlockChain
-from uuid import uuid4
 from threading import Semaphore ,Thread
 import time
-import random
 import socket
 from flask import Flask, jsonify, request
 from argparse import ArgumentParser
 from datetime import datetime
 import json
 import platform
+import requests
 
 # semaforo para no pisarse con el escritor de la cadena al añadir un bloque
 # y el escritor de la cadena en archivo json
@@ -22,7 +21,7 @@ blockchain =BlockChain.Blockchain()
 nodos_red = set() 
 
 # Para saber mi ip
-mi_ip =socket.gethostbyname(socket.gethostname())
+mi_ip = '172.20.10.6'
 
 
 @app.route('/transacciones/nueva', methods=['POST'])
@@ -45,7 +44,7 @@ def blockchain_completa():
     # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
     'chain': [b.toDict() for b in blockchain.bloques if b.hash_bloque is not None],
     }
-    response['longitud']= len(response['chain']) # esto no se si está bn, pide la longitud de los bloques con hash, es decir, lo de encima
+    response['longitud']= len(response['chain']) 
     return jsonify(response), 200
 
 
@@ -71,7 +70,8 @@ def minar():
         backup.acquire()
         if blockchain.integra_bloque(new,new_hash):
             response ={
-            'mensaje': "Nuevo bloque minado \n"+ str(new.toDict())
+            'mensaje': "Nuevo bloque minado",
+            "bloque":new.toDict()
             }
         backup.release()
     return jsonify(response), 200
@@ -103,6 +103,7 @@ def registrar_nodos_completo():
     values =request.get_json()
     global blockchain
     global nodos_red
+    global puerto
     nodos_nuevos =values.get('direccion_nodos')
     if nodos_nuevos is None:
         return "Error: No se ha proporcionado una lista de nodos", 400
@@ -110,14 +111,16 @@ def registrar_nodos_completo():
     for nodo in nodos_nuevos:
         # almacenar los nodos recibidos en nodos_red y enviará a dichos nodos la blockchain del nodo al que se han unido
         nodos_red.add(nodo)
-        lista_nodos = (nodos_red-nodo) | {f'http://{mi_ip}:5000'}
+        lista_nodos = list((nodos_red-{nodo}) | {f'http://{mi_ip}:5000'})
         blockchain_2 = blockchain.toDict()
+        data = {'chain': blockchain_2, 'nodos': lista_nodos}
+        response = requests.post(f'{nodo}/nodos/actualizar', json=data)
 
 
     if all_correct:
         response ={
         'mensaje': 'Se han incluido nuevos nodos en la red',
-        'nodos_totales': list(nodos_red)
+        'nodos_totales': list(nodos_red)+[f'http://{mi_ip}:{puerto}']
         }
     else:
         response ={
@@ -132,17 +135,31 @@ def registrar_nodo_actualiza_blockchain():
     global blockchain
     read_json =request.get_json()
     nodes_addreses =read_json.get("nodos_direcciones")
-    blockchain_leida = BlockChain.Blockchain()
-    for block in read_json['chain']:
-        blockchain_leida.bloques.append(block)
 
-    if not blockchain_leida:
-        return "El blockchain de la red esta currupto", 400
-    else:
-        blockchain = blockchain_leida
-        return "La blockchain del nodo" +str(mi_ip) +":" +str(puerto) +"ha sido correctamente actualizada", 200
+    if nodes_addreses is None:
+        response={
+        'mensaje': 'Error: No se ha proporcionado una lista de nodos'
+        }
+        return jsonify(response), 400
+    
+    for node in nodes_addreses:
+        nodos_red.add(node)
+
+    blockchain_2 = read_json.get("chain")
+    if blockchain_2 is None:
+        response={
+        'mensaje': 'Error: No se ha proporcionado una blockchain'
+        }
+        return jsonify(response), 400
+    
+    blockchain = blockchain.fromDict(blockchain_2)
 
 
+    response={
+    'mensaje': 'Se ha actualizado la blockchain',
+    'nodos_totales': list(nodos_red)
+    }
+    return jsonify(response), 200
 
 
 
@@ -152,7 +169,7 @@ if __name__ =='__main__':
     args =parser.parse_args()
     puerto =args.puerto
     th1 = Thread ( target = copia_de_seguridad )
-    app.run(host='0.0.0.0', port=puerto)
+    app.run(host=mi_ip, port=puerto)
     th1 . start ()
     th1 . join ()
     

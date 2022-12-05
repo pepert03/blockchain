@@ -79,3 +79,11 @@ class Blockchain(object):
 
 
 
+
+    def fromDict(self, dict):
+        self.dificultad = dict['dificultad']
+        self.transacciones = dict['transacciones']
+        self.bloques = []
+        for bloque in dict['chain']:
+            self.bloques.append(Bloque(bloque['indice'],bloque['transacciones'],bloque['timestamp'],bloque['hash_previo'],bloque['prueba']))
+        return self
