@@ -67,17 +67,7 @@ class Blockchain(object):
                 return True
         return False
     
-    def longitud_chain(self):
-        return len(self.bloques)
-    
-    def longitud_transacciones(self):
-        return len(self.transacciones)
+
 
 if __name__ == '__main__':
-    
-    cadena =Blockchain()
-    cadena.primer_bloque()
-    cadena.nueva_transaccion('a','b',9)
-    cadena.nueva_transaccion('a','c',3)
-    cadena.nueva_transaccion('d','f',5)
-    cadena.nuevo_bloque()
+    print()

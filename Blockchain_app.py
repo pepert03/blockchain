@@ -8,6 +8,7 @@ from flask import Flask, jsonify, request
 from argparse import ArgumentParser
 from datetime import datetime
 import json
+import platform
 
 # semaforo para no pisarse con el escritor de la cadena al añadir un bloque
 # y el escritor de la cadena en archivo json
@@ -87,6 +88,10 @@ def copia_de_seguridad(): # copia de seguridad que se ejecuta cada 60s para obte
             json.dump(data, file, indent=4)
         backup.release()
 
+@app.route('/system', methods=['GET'])
+def detallesnodo():
+    detalles = {'maquina':platform.machine(),'nombre_sistema':platform.system(),'version':platform.vesion()}
+    return detalles
 
 if __name__ =='__main__':
     parser =ArgumentParser()
