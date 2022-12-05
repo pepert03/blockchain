@@ -62,9 +62,6 @@ class Blockchain(object):
    
     def integra_bloque(self, bloque_nuevo, hash_prueba):
         if self.prueba_valida(bloque_nuevo,hash_prueba):
-            print(bloque_nuevo.hash_previo)
-            print(self.bloques[-1].hash_bloque)
-            print(self.bloques[-1].toDict())
             if bloque_nuevo.hash_previo == self.bloques[-1].hash_bloque:
                 self.bloques.append(bloque_nuevo)
                 bloque_nuevo.hash_bloque = hash_prueba
