@@ -41,24 +41,25 @@ def nueva_transaccion():
 def blockchain_completa():
     response ={
     # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
-    'chain': [b.toDict() for b in blockchain.bloques if b.hash is not None],
+    'chain': [b.toDict() for b in blockchain.bloques if b.hash_bloque is not None],
     }
     response['longitud']= len(response['chain']) # esto no se si está bn, pide la longitud de los bloques con hash, es decir, lo de encima
     return jsonify(response), 200
 
 @app.route('/minar', methods=['GET'])
 def minar():
+    global backup,mi_ip
+    
     # No hay transacciones
     if len(blockchain.transacciones) == 0:
         response ={
         'mensaje': "No es posible crear un nuevo bloque. No hay transacciones"
         }
     else:
-        global backup,mi_ip
         # se añade la transaccion del minero
         blockchain.nueva_transaccion('0', mi_ip, 1)
         # se obtiene el hash previo
-        hash_previo = blockchain.bloques[-1].hash_previo
+        hash_previo = blockchain.bloques[-1].hash_bloque
         # nuevo bloque 
         new = blockchain.nuevo_bloque(hash_previo)
         # nuevo hash 
