@@ -26,7 +26,16 @@ class Bloque:
         'timestamp': self.timestamp,
         'prueba': self.prueba,
         'transacciones': self.transacciones }
-        return bloque  
+        return bloque 
+
+    def fromDict(self,dict):
+        self.hash_bloque = dict['hash_bloque']
+        self.hash_previo = dict['hash_previo']
+        self.indice = dict['indice']
+        self.timestamp = dict['timestamp']
+        self.prueba = dict['prueba']
+        self.transacciones = dict['transacciones']
+        return self 
    
 class Blockchain(object):
     def __init__(self):
@@ -76,10 +85,6 @@ class Blockchain(object):
             chain.append(bloque.toDict())
         return {'dificultad': self.dificultad, 'transacciones': self.transacciones, 'chain': chain}
 
-
-
-
-
     def fromDict(self, dict):
         self.dificultad = dict['dificultad']
         self.transacciones = dict['transacciones']
@@ -87,3 +92,13 @@ class Blockchain(object):
         for bloque in dict['chain']:
             self.bloques.append(Bloque(bloque['indice'],bloque['transacciones'],bloque['timestamp'],bloque['hash_previo'],bloque['prueba']))
         return self
+
+    def es_valida(self, chain):
+        for i in range(1,len(chain)):
+            bloque_actual = chain[i]
+            bloque_previo = chain[i-1]
+            if bloque_actual.hash_previo != bloque_previo.hash_bloque:
+                return False
+            if bloque_actual.calcular_hash() != bloque_actual.hash_bloque:
+                return False
+        return True

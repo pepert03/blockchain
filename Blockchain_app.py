@@ -1,7 +1,6 @@
 import BlockChain
 from threading import Semaphore ,Thread
 import time
-import socket
 from flask import Flask, jsonify, request
 from argparse import ArgumentParser
 from datetime import datetime
@@ -68,6 +67,12 @@ def minar():
         new_hash = blockchain.prueba_trabajo(new)
         # para insertar el bloque tenemos que no solaparnos con el json que escribe la cadena cada 60s
         backup.acquire()
+        conflicto= resuelve_conflictos()
+        if conflicto:
+            response ={
+            'mensaje': "Se ha encontrado un conflicto. La cadena ha sido actualizada"
+            }
+            return jsonify(response), 201    
         if blockchain.integra_bloque(new,new_hash):
             response ={
             'mensaje': "Nuevo bloque minado",
@@ -111,10 +116,10 @@ def registrar_nodos_completo():
     for nodo in nodos_nuevos:
         # almacenar los nodos recibidos en nodos_red y enviará a dichos nodos la blockchain del nodo al que se han unido
         nodos_red.add(nodo)
-        lista_nodos = list((nodos_red-{nodo}) | {f'http://{mi_ip}:5000'})
+        lista_nodos = list((nodos_red-{nodo}) | {f'http://{mi_ip}:{puerto}'})
         blockchain_2 = blockchain.toDict()
-        data = {'chain': blockchain_2, 'nodos': lista_nodos}
-        response = requests.post(f'{nodo}/nodos/actualizar', json=data)
+        data = {'chain': blockchain_2, 'nodos_direcciones': lista_nodos}
+        response = requests.post(f'{nodo}/nodos/registro_simple', json=data)
 
 
     if all_correct:
@@ -161,6 +166,26 @@ def registrar_nodo_actualiza_blockchain():
     }
     return jsonify(response), 200
 
+
+def resuelve_conflictos():
+    global blockchain
+    longitud_actual = len(blockchain.bloques)
+    for nodo in nodos_red:
+        print("COMPROBANDO NODO",nodo)
+        response =requests.get(str(nodo) +'/chain')
+        print(response.status_code)
+        if response.status_code == 200:
+
+            longitud = response.json()['longitud']
+            chain_json = response.json()['chain']
+            chain=[ BlockChain.Bloque(0,[],0,0).fromDict(block) for block in chain_json]
+            if longitud > longitud_actual and blockchain.es_valida(chain):
+                longitud_actual = longitud
+    print(longitud_actual, len(blockchain.bloques))
+    if longitud_actual > len(blockchain.bloques):
+        blockchain.bloques = [ BlockChain.Bloque().fromDict(block) for block in chain]
+        return True
+    return False
 
 
 if __name__ =='__main__':
