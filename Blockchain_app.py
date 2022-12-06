@@ -171,20 +171,14 @@ def resuelve_conflictos():
     global blockchain
     longitud_actual = len(blockchain.bloques)
     for nodo in nodos_red:
-        print("COMPROBANDO NODO",nodo)
         response =requests.get(str(nodo) +'/chain')
-        print(response.status_code)
         if response.status_code == 200:
-
             longitud = response.json()['longitud']
             chain_json = response.json()['chain']
             assert longitud == len(chain_json)
             chain=[ BlockChain.Bloque(0,[],0,0).fromDict(block) for block in chain_json]
-            if longitud>longitud_actual:
-                print("FUCK YOU ALL")
             if longitud > longitud_actual and blockchain.es_valida(chain):
                 longitud_actual = longitud
-    print(longitud_actual, len(blockchain.bloques))
     if longitud_actual > len(blockchain.bloques):
         blockchain.bloques = [ BlockChain.Bloque().fromDict(block) for block in chain]
         return True

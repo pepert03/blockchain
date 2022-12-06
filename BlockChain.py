@@ -74,7 +74,6 @@ class Blockchain(object):
     def integra_bloque(self, bloque_nuevo, hash_prueba):
         if self.prueba_valida(bloque_nuevo,hash_prueba):
             if bloque_nuevo.hash_previo == self.bloques[-1].hash_bloque:
-                print(self.bloques)
                 self.bloques.append(bloque_nuevo)
                 bloque_nuevo.hash_bloque = hash_prueba
                 bloque_nuevo.transacciones = self.transacciones
@@ -101,12 +100,7 @@ class Blockchain(object):
             bloque_actual = chain[i]
             bloque_previo = chain[i-1]
             if bloque_actual.hash_previo != bloque_previo.hash_bloque:
-                print("FUCK PEPE")
                 return False
             if not self.prueba_valida(bloque_actual,bloque_actual.hash_bloque):
-                print("FUCK ROJO")
-                print(bloque_actual.toDict())
-                print(bloque_actual.hash_bloque)
-                print(bloque_actual.calcular_hash())
                 return False
         return True
