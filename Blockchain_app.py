@@ -41,7 +41,7 @@ def nueva_transaccion():
 def blockchain_completa():
     response ={
     # Solamente permitimos la cadena de aquellos bloques finales que tienen hash
-    'chain': [b.toDict() for b in blockchain.bloques if b.hash_bloque is not None],
+    'chain': [b.toDict() for b in blockchain.bloques]
     }
     response['longitud']= len(response['chain']) 
     return jsonify(response), 200
@@ -178,7 +178,10 @@ def resuelve_conflictos():
 
             longitud = response.json()['longitud']
             chain_json = response.json()['chain']
+            assert longitud == len(chain_json)
             chain=[ BlockChain.Bloque(0,[],0,0).fromDict(block) for block in chain_json]
+            if longitud>longitud_actual:
+                print("FUCK YOU ALL")
             if longitud > longitud_actual and blockchain.es_valida(chain):
                 longitud_actual = longitud
     print(longitud_actual, len(blockchain.bloques))

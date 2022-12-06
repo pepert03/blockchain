@@ -11,12 +11,14 @@ class Bloque:
         self.hash_previo = hash_previo
         self.hash_bloque = None
         self.prueba = prueba
-        if not self.hash_bloque:
-            self.hash_bloque = self.calcular_hash()
    
     def calcular_hash(self): # calcula el hash de un bloque
-        block_string =json.dumps(self.__dict__, sort_keys=True)
-        return hashlib.sha256(block_string.encode()).hexdigest() 
+        d=self.__dict__
+        d["hash_bloque"]=None
+        for i in range(len(d["transacciones"])):
+            d["transacciones"][i]=dict(sorted(d["transacciones"][i].items()))
+        block_string = json.dumps(d, sort_keys=True).encode()
+        return hashlib.sha256(block_string).hexdigest()
 
     def toDict(self):
         bloque= {
@@ -60,7 +62,7 @@ class Blockchain(object):
         new_hash = bloque.hash_bloque
         while str(new_hash)[:self.dificultad] != '0'*self.dificultad:
             bloque.prueba += 1
-            new_hash =bloque.calcular_hash()
+            new_hash = bloque.calcular_hash()
         return str(new_hash)
  
     def prueba_valida(self, bloque, hash_bloque):
@@ -72,6 +74,7 @@ class Blockchain(object):
     def integra_bloque(self, bloque_nuevo, hash_prueba):
         if self.prueba_valida(bloque_nuevo,hash_prueba):
             if bloque_nuevo.hash_previo == self.bloques[-1].hash_bloque:
+                print(self.bloques)
                 self.bloques.append(bloque_nuevo)
                 bloque_nuevo.hash_bloque = hash_prueba
                 bloque_nuevo.transacciones = self.transacciones
@@ -98,7 +101,12 @@ class Blockchain(object):
             bloque_actual = chain[i]
             bloque_previo = chain[i-1]
             if bloque_actual.hash_previo != bloque_previo.hash_bloque:
+                print("FUCK PEPE")
                 return False
-            if bloque_actual.calcular_hash() != bloque_actual.hash_bloque:
+            if not self.prueba_valida(bloque_actual,bloque_actual.hash_bloque):
+                print("FUCK ROJO")
+                print(bloque_actual.toDict())
+                print(bloque_actual.hash_bloque)
+                print(bloque_actual.calcular_hash())
                 return False
         return True

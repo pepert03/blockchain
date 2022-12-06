@@ -1,8 +1,8 @@
 import requests
 import json
 # Cabecera JSON (comun a todas
-nodo1="http://172.20.10.6:5002"
-nodo2="http://172.20.10.6:5003"
+nodo1="http://172.20.10.6:5006"
+nodo2="http://172.20.10.6:5007"
 cabecera ={'Content-type': 'application/json', 'Accept': 'text/plain'}
 # datos transaccion
 transaccion_nueva ={'origen': 'nodoA', 'destino': 'nodoB', 'cantidad': 10}
